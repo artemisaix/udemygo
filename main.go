@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -15,7 +16,7 @@ func main() {
 		return
 	}
 
-	result, err := divide(10, 5)
+	result, err := divide(10, 2)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -23,6 +24,20 @@ func main() {
 
 	fmt.Println(num)
 	fmt.Println(result)
+
+	file, err := os.Create("hola.txt")
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	_, err = file.Write([]byte("Hola Andre"))
+	if err != nil {
+		fmt.Println("ErrorD: ", err)
+		return
+	}
+	defer file.Close()
+
 }
 
 func divide(dividendo, divisor int) (int, error) {
