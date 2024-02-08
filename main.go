@@ -17,6 +17,7 @@ func main() {
 
 	divide(10, 2)
 	divide(10, 0)
+	divide(10, 3)
 
 	fmt.Println(num)
 
@@ -39,12 +40,11 @@ func main() {
 }
 
 func divide(dividendo, divisor int) {
-	validateZero(divisor)
+	defer func() { //si se produce un panico lo recupera y se ejecuta hasta
+		//el final de la funcion, y no interrumpe el flujo de la aplicacion
+		if r := recover(); r != nil {
+			fmt.Println(r)
+		}
+	}()
 	fmt.Println(dividendo / divisor)
-}
-
-func validateZero(divisor int) {
-	if divisor == 0 {
-		panic("ERROR: No se puede dividir por 0")
-	}
 }
