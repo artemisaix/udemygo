@@ -1,66 +1,122 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 )
 
-func main() {
-	log.SetPrefix("main():")
-	str := "123"
-	num, err := strconv.Atoi(str)
+type Contact struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
+}
 
+// Guardar contactos en un file jSon
+func SaveContacts(contacts []Contact) error {
+	file, err := os.Create("contacts.json")
 	if err != nil {
-		fmt.Println("Error: ", err)
-		return
+		return err
 	}
-
-	divide(10, 2)
-	// divide(10, 0)
-	divide(10, 3)
-
-	fmt.Println(num)
-
-	//uso de defer
-	file, err := os.Create("hola.txt")
+	defer file.Close()
+	encoder := json.NewEncoder(file) //convierte structs en JSON
+	err = encoder.Encode(contacts)   //codificar el slice de contactos en formato json y lo escribe en file
 	if err != nil {
-		fmt.Println("Error: ", err)
-		return
+		return err
 	}
+	return nil //no falló nada y todo se guardó ok
+}
 
-	_, err = file.Write([]byte("Hola Andre"))
+func GetContacts(contacts *[]Contact) error {
+	file, err := os.Open("contacts.json")
 	if err != nil {
-		fmt.Println("ErrorD: ", err)
-		return
+		return err
 	}
 	defer file.Close()
 
-	file, err = os.OpenFile("info.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	//recuperar el Contenido dle file JSON
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&contacts)
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
-	log.SetOutput(file) // lo escribe en un archivo de log
-	log.Print("Oye,soy un log en el file")
-	defer file.Close() //se cierra el fujo del archivo de log
-
-	//uso de logs()
-
-	//log.Panic("No se puede continuar") //detiene la ejecucion del programa
-	log.Print("Mensaje de registros...")
-	//log.Fatal("No se puede continuar") //detiene la ejecucion del programa
-	log.Println("Este es otro mensaje de registros...")
+	return nil
 
 }
 
-func divide(dividendo, divisor int) {
-	defer func() { //si se produce un panico lo recupera y se ejecuta hasta
-		//el final de la funcion, y no interrumpe el flujo de la aplicacion
-		if r := recover(); r != nil {
-			fmt.Println(r)
+func main() {
+	var contacts []Contact
+	err := GetContacts(&contacts)
+	if err != nil {
+		log.Println("Failed to get contacts")
+	}
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Println("==GESTOR DE CONTACTOS==\n",
+			"1. Agregar\n",
+			"2. Mostrar\n",
+			"3. Eliminar\n",
+			"4. Salir\n",
+			"Ingrese una opcion: ")
+		//Leer opcion del usuario
+		var option int
+		_, err = fmt.Scanln(&option)
+		if err != nil {
+			log.Println("Error al leer la opción", err)
+			return
 		}
-	}()
-	fmt.Println(dividendo / divisor)
+		//Manejar la opcion del usuario
+		switch option {
+
+		case 1:
+			//Ingresar y crear contacto
+			var c Contact
+			fmt.Print("Nombre: ")
+			c.Name, _ = reader.ReadString('\n')
+			fmt.Print("Email: ")
+			c.Email, _ = reader.ReadString('\n')
+			fmt.Print("Phone: ")
+			c.Phone, _ = reader.ReadString('\n')
+			//se agrega el contacto nuevo al slice
+			contacts = append(contacts, c)
+			if err := SaveContacts(contacts); err != nil {
+				log.Println("Failed to save new contact", err)
+			}
+
+		case 2:
+			//Mostrar contactos
+			fmt.Print("============================================================\n")
+			for index, c := range contacts {
+				fmt.Printf("\n%d. Name: %s Email: %s Phone: %s\n",
+					index+1, c.Name, c.Email, c.Phone)
+			}
+			fmt.Print("============================================================\n")
+		case 3:
+			//Eliminar contacto
+			fmt.Print("Ingrese el numero del contacto que desea eliminar: ")
+			var index int
+			_, err = fmt.Scanln(&index)
+			if err != nil {
+				log.Println("Error al leer la opción", err)
+				return
+			}
+			if index > len(contacts) {
+				fmt.Println("Contacto no encontrado")
+				continue
+			}
+			contacts = append(contacts[:index], contacts[index+1:]...)
+			if err := SaveContacts(contacts); err != nil {
+				log.Println("Failed to save new contact", err)
+			}
+		case 4:
+			//Salir
+			fmt.Println("Bye")
+			return
+		default:
+			fmt.Println("¡¡¡¡¡  Invalid option   !!!!!!")
+		}
+	}
 }
