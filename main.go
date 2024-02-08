@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -16,15 +15,12 @@ func main() {
 		return
 	}
 
-	result, err := divide(10, 2)
-	if err != nil {
-		fmt.Println("Error: ", err)
-		return
-	}
+	divide(10, 2)
+	divide(10, 0)
 
 	fmt.Println(num)
-	fmt.Println(result)
 
+	//uso de defer
 	file, err := os.Create("hola.txt")
 	if err != nil {
 		fmt.Println("Error: ", err)
@@ -38,11 +34,17 @@ func main() {
 	}
 	defer file.Close()
 
+	//uso del panic
+
 }
 
-func divide(dividendo, divisor int) (int, error) {
+func divide(dividendo, divisor int) {
+	validateZero(divisor)
+	fmt.Println(dividendo / divisor)
+}
+
+func validateZero(divisor int) {
 	if divisor == 0 {
-		return 0, errors.New("ERROR: No se puede dividir por 0")
+		panic("ERROR: No se puede dividir por 0")
 	}
-	return dividendo / divisor, nil
 }
